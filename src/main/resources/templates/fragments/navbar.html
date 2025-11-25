@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Navbar</title>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark px-4" th:fragment="main-navbar">
+    <a class="navbar-brand" th:href="@{/}">GymApp</a>
+
+    <div>
+        <a class="btn btn-light me-2" th:href="@{/}">Strona główna</a>
+        <a class="btn btn-outline-light me-2" th:href="@{/classes}">Zajęcia</a>
+        <a class="btn btn-outline-light" th:href="@{/bookings}">Moje rezerwacje</a>
+    </div>
+</nav>
+</body>
+</html>
