@@ -48,9 +48,12 @@
             </td>
             <td th:text="${wc.capacity}">5</td>
             <td>
-                <form th:action="@{/classes/{id}/book(id=${wc.id})}"
+                <!-- TU BYŁ PROBLEM – zmieniamy URL na /bookings/create -->
+                <form th:action="@{/bookings/create}"
                       method="post"
                       class="d-inline">
+                    <!-- przekazujemy id klasy jako parametr classId -->
+                    <input type="hidden" name="classId" th:value="${wc.id}"/>
                     <button type="submit" class="btn btn-primary btn-sm">
                         Zapisz się
                     </button>

@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -17,36 +18,56 @@ public class WebController {
     private final WorkoutClassService workoutClassService;
     private final BookingService bookingService;
 
-    // STRONA ZAJĘĆ
+    // 🔹 STRONA GŁÓWNA ("index.html")
+    @GetMapping("/")
+    public String home() {
+        return "index";
+    }
+
+    // 🔹 LISTA ZAJĘĆ
     @GetMapping("/classes")
     public String showClasses(Model model) {
         model.addAttribute("classes", workoutClassService.getAllClasses());
-        return "classes"; // templates/classes.html
+        return "classes";
     }
 
-    // MOJE REZERWACJE (userId = 1 na sztywno)
-    @GetMapping("/bookings")
-    public String showBookings(Model model) {
-        Long userId = 1L;
-        model.addAttribute("bookings", bookingService.getBookingsForUser(userId));
-        return "bookings"; // templates/bookings.html
-    }
-
-    // ZAPIS NA ZAJĘCIA (kliknięcie "Zapisz się")
-    @PostMapping("/classes/{id}/book")
-    public String bookClass(@PathVariable("id") Long workoutClassId,
-                            RedirectAttributes redirectAttributes) {
-
-        Long userId = 1L; // później z zalogowanego
+    // 🔹 ZAPIS Z WIDOKU "ZAJĘCIA"
+    @PostMapping("/bookings/create")
+    public String createBookingFromView(@RequestParam("classId") Long workoutClassId,
+                                        RedirectAttributes redirectAttributes) {
+        Long userId = 1L; // na sztywno
 
         try {
             bookingService.createBooking(userId, workoutClassId);
-            redirectAttributes.addFlashAttribute("successMessage",
-                    "Zostałeś zapisany na zajęcia.");
+            redirectAttributes.addFlashAttribute("successMessage", "Zapisano na zajęcia!");
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
 
         return "redirect:/classes";
+    }
+
+    // 🔹 LISTA REZERWACJI USERA
+    @GetMapping("/bookings")
+    public String showBookings(Model model) {
+        Long userId = 1L; // na sztywno
+        model.addAttribute("bookings", bookingService.getBookingsForUser(userId));
+        return "bookings";
+    }
+
+    // 🔹 ANULOWANIE REZERWACJI
+    @PostMapping("/bookings/cancel/{bookingId}")
+    public String cancelBooking(@PathVariable Long bookingId,
+                                RedirectAttributes redirectAttributes) {
+        Long userId = 1L; // na sztywno
+
+        try {
+            bookingService.cancelBooking(bookingId, userId);
+            redirectAttributes.addFlashAttribute("successMessage", "Rezerwacja została anulowana.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+
+        return "redirect:/bookings";
     }
 }
