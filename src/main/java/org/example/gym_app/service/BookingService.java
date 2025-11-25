@@ -21,34 +21,46 @@ public class BookingService {
 
     public Booking createBooking(Long userId, Long workoutClassId) {
 
-        // 1. sprawdź czy user istnieje
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Użytkownik o id " + userId + " nie istnieje"));
+        // 1) czy już zapisany na te zajęcia?
+        if (bookingRepository.existsByUser_IdAndWorkoutClass_Id(userId, workoutClassId)) {
+            throw new RuntimeException("Już jesteś zapisany na te zajęcia!");
+        }
 
-        // 2. sprawdź czy zajęcia istnieją
+        // 2) czy zajęcia istnieją?
         WorkoutClass workoutClass = workoutClassRepository.findById(workoutClassId)
-                .orElseThrow(() -> new RuntimeException("Zajęcia o id " + workoutClassId + " nie istnieją"));
+                .orElseThrow(() -> new RuntimeException("Wybrane zajęcia nie istnieją."));
 
-        // 3. sprawdź, czy są wolne miejsca
-        int count = bookingRepository.countByWorkoutClass_Id(workoutClassId);
-        if (count >= workoutClass.getCapacity()) {
+        // 3) limit miejsc
+        int currentCount = bookingRepository.countByWorkoutClass_Id(workoutClassId);
+        if (currentCount >= workoutClass.getCapacity()) {
             throw new RuntimeException("Brak wolnych miejsc na te zajęcia!");
         }
 
-        // 4. sprawdź, czy user nie jest już zapisany
-        if (bookingRepository.existsByUser_IdAndWorkoutClass_Id(userId, workoutClassId)) {
-            throw new RuntimeException("Użytkownik jest już zapisany na te zajęcia!");
-        }
+        // 4) czy user istnieje?
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnieje."));
 
-        // 5. utwórz rezerwację
+        // 5) zapis rezerwacji
         Booking booking = new Booking();
-        booking.setUser(user);                // <-- tu ustawiamy obiekt User
-        booking.setWorkoutClass(workoutClass); // <-- i obiekt WorkoutClass
+        booking.setUser(user);
+        booking.setWorkoutClass(workoutClass);
 
         return bookingRepository.save(booking);
     }
 
     public List<Booking> getBookingsForUser(Long userId) {
         return bookingRepository.findByUser_Id(userId);
+    }
+
+    // Przyda się później do "Anuluj rezerwację"
+    public void cancelBooking(Long bookingId, Long userId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Taka rezerwacja nie istnieje."));
+
+        if (!booking.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Nie możesz usunąć cudzej rezerwacji.");
+        }
+
+        bookingRepository.delete(booking);
     }
 }

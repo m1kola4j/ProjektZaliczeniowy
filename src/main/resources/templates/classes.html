@@ -23,12 +23,11 @@
 <div class="container">
     <h1 class="mb-4">Dostępne zajęcia</h1>
 
-    <div th:if="${errorMessage}" class="alert alert-warning" role="alert"
-         th:text="${errorMessage}">
-        <!-- Tu wejdzie np.: "Już jesteś zapisany na te zajęcia!" -->
-    </div>
+    <!-- Komunikaty po próbie rezerwacji -->
+    <div th:if="${successMessage}" class="alert alert-success mt-3" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger mt-3" th:text="${errorMessage}"></div>
 
-    <table class="table table-striped align-middle">
+    <table class="table table-striped align-middle mt-3">
         <thead>
         <tr>
             <th>#</th>
@@ -49,7 +48,7 @@
             </td>
             <td th:text="${wc.capacity}">5</td>
             <td>
-                <form th:action="@{'/bookings/create'(classId=${wc.id})}"
+                <form th:action="@{/classes/{id}/book(id=${wc.id})}"
                       method="post"
                       class="d-inline">
                     <button type="submit" class="btn btn-primary btn-sm">
