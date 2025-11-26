@@ -1,9 +1,14 @@
 package org.example.gym_app.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.gym_app.model.Booking;
+import org.example.gym_app.model.User;
 import org.example.gym_app.model.WorkoutClass;
+import org.example.gym_app.repository.UserRepository;
 import org.example.gym_app.service.BookingService;
 import org.example.gym_app.service.WorkoutClassService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,19 +26,19 @@ public class WebController {
 
     private final WorkoutClassService workoutClassService;
     private final BookingService bookingService;
+    private final UserRepository userRepository;
 
-    //  STRONA GŁÓWNA
+    // ---------- STRONA GŁÓWNA ----------
     @GetMapping("/")
     public String home() {
         return "index";
     }
 
-    //  LISTA ZAJĘĆ + info o wolnych miejscach
+    // ---------- LISTA ZAJĘĆ ----------
     @GetMapping("/classes")
     public String showClasses(Model model) {
         List<WorkoutClass> classes = workoutClassService.getAllClasses();
 
-        // Mapujemy: id zajęć -> wolne miejsca
         Map<Long, Integer> freeSpots = new HashMap<>();
         for (WorkoutClass wc : classes) {
             int free = bookingService.getFreeSpotsForClass(wc.getId());
@@ -46,11 +51,12 @@ public class WebController {
         return "classes";
     }
 
-    //  ZAPIS NA ZAJĘCIA z widoku /classes
+    // ---------- ZAPIS NA ZAJĘCIA ----------
     @PostMapping("/classes/{id}/book")
     public String bookClass(@PathVariable("id") Long classId,
                             RedirectAttributes redirectAttributes) {
-        Long userId = 1L; // na sztywno
+
+        Long userId = getCurrentUserId();
 
         try {
             bookingService.createBooking(userId, classId);
@@ -62,19 +68,32 @@ public class WebController {
         return "redirect:/classes";
     }
 
-    //  LISTA REZERWACJI UŻYTKOWNIKA
+    // ---------- LISTA REZERWACJI ----------
     @GetMapping("/bookings")
     public String showBookings(Model model) {
-        Long userId = 1L; // na sztywno
-        model.addAttribute("bookings", bookingService.getBookingsForUser(userId));
+        Long userId = getCurrentUserId();
+
+        List<Booking> bookings = bookingService.getBookingsForUser(userId);
+
+        Map<Long, Integer> freeSpots = new HashMap<>();
+        for (Booking b : bookings) {
+            Long classId = b.getWorkoutClass().getId();
+            int free = bookingService.getFreeSpotsForClass(classId);
+            freeSpots.put(classId, free);
+        }
+
+        model.addAttribute("bookings", bookings);
+        model.addAttribute("freeSpots", freeSpots);
+
         return "bookings";
     }
 
-    //  ANULOWANIE REZERWACJI
+    // ---------- ANULOWANIE REZERWACJI ----------
     @PostMapping("/bookings/cancel/{bookingId}")
     public String cancelBooking(@PathVariable Long bookingId,
                                 RedirectAttributes redirectAttributes) {
-        Long userId = 1L; // na sztywno
+
+        Long userId = getCurrentUserId();
 
         try {
             bookingService.cancelBooking(bookingId, userId);
@@ -84,5 +103,16 @@ public class WebController {
         }
 
         return "redirect:/bookings";
+    }
+
+    // ---------- pomocnicze: id aktualnie zalogowanego usera ----------
+    private Long getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Nie znaleziono użytkownika: " + username));
+
+        return user.getId();
     }
 }

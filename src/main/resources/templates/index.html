@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<html lang="pl"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
 <head>
     <meta charset="UTF-8">
     <title>GymApp – Strona główna</title>
@@ -9,18 +11,34 @@
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-dark bg-dark mb-4">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">GymApp</a>
-        <div>
-            <a class="btn btn-light me-2" href="/">Strona główna</a>
-            <a class="btn btn-outline-light me-2" href="/classes">Zajęcia</a>
-            <a class="btn btn-outline-light" href="/bookings">Moje rezerwacje</a>
-        </div>
-    </div>
-</nav>
+<!-- navbar wspólny -->
+<div th:replace="~{fragments/navbar :: main-navbar}"></div>
 
-<div class="container">
+<!-- TYLKO NA STRONIE GŁÓWNEJ: pasek logowania / wylogowania -->
+<div class="bg-dark text-end pe-4 py-2">
+    <!-- zalogowany użytkownik -->
+    <span class="text-white me-3" sec:authorize="isAuthenticated()">
+        Zalogowano jako <strong sec:authentication="name">user</strong>
+    </span>
+
+    <!-- niezalogowany: logowanie / rejestracja -->
+    <span sec:authorize="isAnonymous()">
+        <a class="btn btn-outline-light btn-sm me-2" th:href="@{/login}">Logowanie</a>
+        <a class="btn btn-outline-light btn-sm me-2" th:href="@{/register}">Rejestracja</a>
+    </span>
+
+    <!-- zalogowany: WYLOGUJ -->
+    <form th:action="@{/logout}"
+          method="post"
+          class="d-inline"
+          sec:authorize="isAuthenticated()">
+        <button type="submit" class="btn btn-outline-light btn-sm">
+            Wyloguj
+        </button>
+    </form>
+</div>
+
+<div class="container mt-4">
     <h1 class="mb-4">Gym App</h1>
     <p class="lead mb-4">Witaj w aplikacji do zarządzania zajęciami na siłowni.</p>
 
@@ -32,7 +50,7 @@
                     <p class="card-text">
                         Zobacz listę wszystkich dostępnych zajęć i zapisz się na wybrane.
                     </p>
-                    <a href="/classes" class="btn btn-primary">Przejdź do zajęć</a>
+                    <a th:href="@{/classes}" class="btn btn-primary">Przejdź do zajęć</a>
                 </div>
             </div>
         </div>
@@ -44,7 +62,7 @@
                     <p class="card-text">
                         Sprawdź, na jakie zajęcia jesteś już zapisany.
                     </p>
-                    <a href="/bookings" class="btn btn-secondary">Pokaż rezerwacje</a>
+                    <a th:href="@{/bookings}" class="btn btn-secondary">Pokaż rezerwacje</a>
                 </div>
             </div>
         </div>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<html lang="pl"
+      xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>GymApp – Moje rezerwacje</title>
@@ -9,46 +10,40 @@
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-dark bg-dark mb-4">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">GymApp</a>
-        <div>
-            <a class="btn btn-outline-light me-2" href="/">Strona główna</a>
-            <a class="btn btn-outline-light me-2" href="/classes">Zajęcia</a>
-            <a class="btn btn-light" href="/bookings">Moje rezerwacje</a>
-        </div>
-    </div>
-</nav>
+<div th:replace="~{fragments/navbar :: main-navbar}"></div>
 
-<div class="container">
-    <h1 class="mb-4">Moje rezerwacje (user #1)</h1>
+<div class="container mt-4">
+    <h1 class="mb-4">Moje rezerwacje</h1>
 
-    <!-- Komunikaty po anulowaniu -->
-    <div th:if="${successMessage}" class="alert alert-success mt-3" th:text="${successMessage}"></div>
-    <div th:if="${errorMessage}" class="alert alert-danger mt-3" th:text="${errorMessage}"></div>
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <table class="table table-striped align-middle mt-3">
+    <table class="table table-striped align-middle">
         <thead>
         <tr>
             <th>#</th>
             <th>Nazwa zajęć</th>
             <th>Opis</th>
             <th>Start</th>
-            <th>Miejsca (limit)</th>
+            <th>Miejsca (wolne / limit)</th>
             <th>Akcja</th>
         </tr>
         </thead>
         <tbody>
-        <tr th:each="b, iter : ${bookings}">
+        <tr th:each="booking, iter : ${bookings}">
             <td th:text="${iter.index + 1}">1</td>
-            <td th:text="${b.workoutClass.name}">Cardio</td>
-            <td th:text="${b.workoutClass.description}">Opis</td>
-            <td th:text="${#temporals.format(b.workoutClass.startTime, 'yyyy-MM-dd HH:mm')}">
+            <td th:text="${booking.workoutClass.name}">Cardio</td>
+            <td th:text="${booking.workoutClass.description}">Opis</td>
+            <td th:text="${#temporals.format(booking.workoutClass.startTime, 'yyyy-MM-dd HH:mm')}">
                 2025-01-10 10:00
             </td>
-            <td th:text="${b.workoutClass.capacity}">5</td>
+
+            <td th:text="|${freeSpots[booking.workoutClass.id]} / ${booking.workoutClass.capacity}|">
+                4 / 5
+            </td>
+
             <td>
-                <form th:action="@{/bookings/cancel/{id}(id=${b.id})}"
+                <form th:action="@{/bookings/cancel/{id}(id=${booking.id})}"
                       method="post"
                       class="d-inline">
                     <button type="submit" class="btn btn-danger btn-sm">
