@@ -1,12 +1,13 @@
 package org.example.gym_app.config;
 
 import lombok.RequiredArgsConstructor;
+import org.example.gym_app.model.User;
 import org.example.gym_app.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -25,46 +26,56 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // publiczne rzeczy
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/v3/api-docs.yaml",
                                 "/h2-console/**",
-                                "/register",
                                 "/login",
+                                "/register",
+                                "/",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**"
                         ).permitAll()
+                        // tylko ADMIN
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // reszta: każdy zalogowany (USER lub ADMIN)
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form
+                .formLogin(login -> login
                         .loginPage("/login")
-                        .permitAll()
                         .defaultSuccessUrl("/", true)
+                        .permitAll()
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
+                        .logoutSuccessUrl("/")
                         .permitAll()
                 );
 
-        // pozwalamy na <iframe> dla konsoli H2
+        // pozwalamy na <iframe> dla H2
         http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
     }
 
-    // UserDetailsService na bazie tabeli users
+    // userzy ładowani z bazy (tabela users)
     @Bean
-    public UserDetailsService userDetailsService() {
-        return username -> userRepository.findByUsername(username)
-                .map(u -> org.springframework.security.core.userdetails.User
-                        .withUsername(u.getUsername())
-                        .password(u.getPassword())
-                        .roles(u.getRole()) // w DB masz "USER" / "ADMIN"
-                        .build())
-                .orElseThrow(() -> new UsernameNotFoundException("Nie znaleziono użytkownika: " + username));
+    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
+        return username -> {
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("Nie znaleziono użytkownika: " + username));
+
+            UserDetails details = org.springframework.security.core.userdetails.User
+                    .withUsername(user.getUsername())
+                    .password(user.getPassword()) // JUŻ zakodowane w bazie
+                    .roles(user.getRole())        // np. "USER" albo "ADMIN"
+                    .build();
+
+            return details;
+        };
     }
 
     @Bean

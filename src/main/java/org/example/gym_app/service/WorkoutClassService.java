@@ -20,4 +20,13 @@ public class WorkoutClassService {
     public WorkoutClass addClass(WorkoutClass workoutClass) {
         return workoutClassRepository.save(workoutClass);
     }
+
+    public WorkoutClass getClassById(Long id) {
+        return workoutClassRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Zajęcia nie istnieją."));
+    }
+
+    public void deleteClass(Long id) {
+        workoutClassRepository.deleteById(id);
+    }
 }

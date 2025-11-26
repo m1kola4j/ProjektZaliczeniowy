@@ -6,6 +6,7 @@ import org.example.gym_app.model.WorkoutClass;
 import org.example.gym_app.repository.UserRepository;
 import org.example.gym_app.repository.WorkoutClassRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -16,25 +17,27 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final WorkoutClassRepository workoutClassRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
 
-        // jeśli nie ma żadnych userów -> tworzymy dwóch
-        if (userRepository.count() == 0) {
+        // jeśli nie ma usera o nazwie "user" -> tworzymy
+        if (!userRepository.existsByUsername("user")) {
             User user = new User();
             user.setUsername("user");
-            user.setPassword("user123");
+            user.setPassword(passwordEncoder.encode("user123"));
             user.setRole("USER");
             userRepository.save(user);
+        }
 
+        // jeśli nie ma usera "admin" -> tworzymy admina
+        if (!userRepository.existsByUsername("admin")) {
             User admin = new User();
             admin.setUsername("admin");
-            admin.setPassword("admin123");
+            admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setRole("ADMIN");
             userRepository.save(admin);
-
-            System.out.println(">>> Dodano przykładowych użytkowników: user/user123 i admin/admin123");
         }
 
         // jeśli nie ma żadnych zajęć -> tworzymy jedne przykładowe
@@ -48,5 +51,7 @@ public class DataInitializer implements CommandLineRunner {
 
             System.out.println(">>> Dodano przykładowe zajęcia: Cardio (id=" + cardio.getId() + ")");
         }
+
+        System.out.println(">>> Inicjalizacja danych zakończona.");
     }
 }

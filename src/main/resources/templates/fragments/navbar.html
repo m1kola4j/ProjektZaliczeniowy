@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<html lang="pl"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>Navbar</title>
@@ -8,12 +10,51 @@
 </head>
 <body>
 <nav class="navbar navbar-dark bg-dark px-4" th:fragment="main-navbar">
+    <!-- logo / nazwa -->
     <a class="navbar-brand" th:href="@{/}">GymApp</a>
 
-    <div class="d-flex gap-2">
+    <!-- linki nawigacyjne -->
+    <div class="d-flex gap-2 me-auto">
         <a class="btn btn-outline-light" th:href="@{/}">Strona główna</a>
         <a class="btn btn-outline-light" th:href="@{/classes}">Zajęcia</a>
         <a class="btn btn-outline-light" th:href="@{/bookings}">Moje rezerwacje</a>
+
+        <!-- Panel admina tylko dla ADMINA -->
+        <a class="btn btn-warning"
+           th:href="@{/admin}"
+           sec:authorize="hasRole('ADMIN')">
+            Panel admina
+        </a>
+    </div>
+
+    <!-- prawa strona: login / register / info o userze / logout -->
+    <div class="d-flex align-items-center gap-2">
+        <!-- tekst "Zalogowano jako ..." tylko gdy ktoś jest zalogowany -->
+        <span class="text-light" sec:authorize="isAuthenticated()">
+            Zalogowano jako <strong sec:authentication="name">user</strong>
+        </span>
+
+        <!-- Logowanie / Rejestracja TYLKO dla niezalogowanych -->
+        <a class="btn btn-outline-light"
+           th:href="@{/login}"
+           sec:authorize="isAnonymous()">
+            Logowanie
+        </a>
+        <a class="btn btn-outline-light"
+           th:href="@{/register}"
+           sec:authorize="isAnonymous()">
+            Rejestracja
+        </a>
+
+        <!-- Wyloguj TYLKO dla zalogowanych -->
+        <form th:action="@{/logout}"
+              method="post"
+              class="d-inline"
+              sec:authorize="isAuthenticated()">
+            <button type="submit" class="btn btn-outline-light">
+                Wyloguj
+            </button>
+        </form>
     </div>
 </nav>
 </body>
