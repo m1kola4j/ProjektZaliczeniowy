@@ -20,26 +20,28 @@ public class BookingService {
     private final UserRepository userRepository;
     private final WorkoutClassRepository workoutClassRepository;
 
+    // Utworzenie rezerwacji z kontrolą duplikatu i limitu miejsc
     @Transactional
     public Booking createBooking(Long userId, Long workoutClassId) {
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Nie znaleziono użytkownika"));
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnieje."));
 
         WorkoutClass workoutClass = workoutClassRepository.findById(workoutClassId)
-                .orElseThrow(() -> new RuntimeException("Nie znaleziono zajęć"));
+                .orElseThrow(() -> new RuntimeException("Zajęcia nie istnieją."));
 
-        // 1) sprawdź czy user nie jest już zapisany
+        // 1) Czy user już zapisany?
         if (bookingRepository.existsByUser_IdAndWorkoutClass_Id(userId, workoutClassId)) {
             throw new RuntimeException("Już jesteś zapisany na te zajęcia!");
         }
 
-        // 2) sprawdź limit miejsc
-        int count = bookingRepository.countByWorkoutClass_Id(workoutClassId);
-        if (count >= workoutClass.getCapacity()) {
-            throw new RuntimeException("Brak wolnych miejsc na te zajęcia!");
+        // 2) Czy są wolne miejsca?
+        int currentCount = bookingRepository.countByWorkoutClass_Id(workoutClassId);
+        if (currentCount >= workoutClass.getCapacity()) {
+            throw new RuntimeException("Brak wolnych miejsc na te zajęcia.");
         }
 
-        // 3) zapisz rezerwację
+        // 3) Tworzymy rezerwację
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setWorkoutClass(workoutClass);
@@ -47,17 +49,28 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
+    // Wszystkie rezerwacje danego usera
+    @Transactional(readOnly = true)
     public List<Booking> getBookingsForUser(Long userId) {
         return bookingRepository.findByUser_Id(userId);
     }
 
-    // anulowanie rezerwacji
+    // Ile wolnych miejsc zostało na danych zajęciach (capacity - istniejące rezerwacje)
+    @Transactional(readOnly = true)
+    public int getFreeSpotsForClass(Long workoutClassId) {
+        WorkoutClass workoutClass = workoutClassRepository.findById(workoutClassId)
+                .orElseThrow(() -> new RuntimeException("Zajęcia nie istnieją."));
+
+        int taken = bookingRepository.countByWorkoutClass_Id(workoutClassId);
+        return workoutClass.getCapacity() - taken;
+    }
+
+    // Anulowanie rezerwacji (sprawdzamy, czy to rezerwacja tego usera)
     @Transactional
     public void cancelBooking(Long bookingId, Long userId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Nie znaleziono rezerwacji."));
+                .orElseThrow(() -> new RuntimeException("Rezerwacja nie istnieje."));
 
-        // zabezpieczenie: user może anulować tylko swoją rezerwację
         if (!booking.getUser().getId().equals(userId)) {
             throw new RuntimeException("Nie możesz anulować cudzej rezerwacji.");
         }

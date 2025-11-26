@@ -34,7 +34,7 @@
             <th>Nazwa</th>
             <th>Opis</th>
             <th>Start</th>
-            <th>Miejsca</th>
+            <th>Miejsca (wolne / limit)</th>
             <th>Akcja</th>
         </tr>
         </thead>
@@ -46,14 +46,14 @@
             <td th:text="${#temporals.format(wc.startTime, 'yyyy-MM-dd HH:mm')}">
                 2025-01-10 10:00
             </td>
-            <td th:text="${wc.capacity}">5</td>
+
+            <!-- wolne / limit -->
+            <td th:text="|${freeSpots[wc.id]} / ${wc.capacity}|">5 / 5</td>
+
             <td>
-                <!-- TU BYŁ PROBLEM – zmieniamy URL na /bookings/create -->
-                <form th:action="@{/bookings/create}"
+                <form th:action="@{/classes/{id}/book(id=${wc.id})}"
                       method="post"
                       class="d-inline">
-                    <!-- przekazujemy id klasy jako parametr classId -->
-                    <input type="hidden" name="classId" th:value="${wc.id}"/>
                     <button type="submit" class="btn btn-primary btn-sm">
                         Zapisz się
                     </button>
