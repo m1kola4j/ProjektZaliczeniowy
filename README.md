@@ -16,6 +16,7 @@ Aplikacja webowa dla klubu fitness pozwalająca zarządzać zajęciami, rezerwac
 - Publiczna lista zajęć wraz z liczbą wolnych miejsc, możliwość zapisu i anulowania rezerwacji.
 - Panel administratora z CRUD-em na zajęciach, liczbą użytkowników/rezerwacji.
 - REST API (`/api/classes`, `/api/bookings`) dla klienta mobilnego/SPA.
+- Dziennik ćwiczeń – prywatne wpisy użytkownika z ćwiczeniami, seriami, ciężarami (dodawanie, edycja, usuwanie).
 - Inicjalizacja kont demo i przykładowych zajęć (`DataInitializer`).
 
 ## Wymagania systemowe

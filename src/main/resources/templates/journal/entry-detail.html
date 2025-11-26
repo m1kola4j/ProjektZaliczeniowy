@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${entry.title}">Szczegóły wpisu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<div th:replace="fragments/navbar :: main-navbar"></div>
+<main class="container py-4">
+    <div class="page-header">
+        <div>
+            <p class="text-uppercase text-muted mb-1">Szczegóły wpisu</p>
+            <h1 th:text="${entry.title}"></h1>
+        </div>
+        <a class="btn btn-outline-secondary" th:href="@{/journal}">Powrót</a>
+    </div>
+
+    <div class="card p-4 mb-4">
+        <div class="entry-meta mb-2">
+            <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-calendar-event" viewBox="0 0 16 16">
+                    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5z"/>
+                    <path d="M16 14V5H0v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1M1 4h14V3a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1z"/>
+                    <path d="M6.5 7a.5.5 0 0 1 .5.5V9h1.5a.5.5 0 0 1 0 1H7v1.5a.5.5 0 0 1-1 0V10H4.5a.5.5 0 0 1 0-1H6V7.5a.5.5 0 0 1 .5-.5"/>
+                </svg>
+                <span th:text="${entry.sessionDate}"></span>
+            </span>
+            <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-journal-text" viewBox="0 0 16 16">
+                    <path d="M5 8a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5A.5.5 0 0 1 5 8m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5A.5.5 0 0 1 5 6"/>
+                    <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2h1.5A1.5 1.5 0 0 0 4 14.5v-13A1.5 1.5 0 0 0 2.5 0H1a2 2 0 0 1 2-2"/>
+                </svg>
+                <span th:text="${#lists.size(entry.exercises)} + ' ćw.'"></span>
+            </span>
+        </div>
+        <p class="mb-0" th:if="${entry.notes}">
+            <strong>Notatki:</strong>
+            <span th:text="${entry.notes}"></span>
+        </p>
+    </div>
+
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Ćwiczenia</h2>
+            <span class="badge bg-primary-subtle text-primary">
+                Razem: <span th:text="${#lists.size(entry.exercises)}"></span>
+            </span>
+        </div>
+
+        <div th:if="${entry.exercises.isEmpty()}" class="empty-state">
+            Brak ćwiczeń w tym wpisie. Dodaj pierwsze poniżej.
+        </div>
+
+        <div th:each="ex : ${entry.exercises}" class="exercise-card">
+            <div class="d-flex justify-content-between flex-wrap gap-3">
+                <div>
+                    <h4 th:text="${ex.name}"></h4>
+                    <div class="exercise-meta">
+                        <span th:text="'Serie: ' + ${ex.setsCount}"></span> ·
+                        <span th:text="'Powtórzenia: ' + ${ex.reps}"></span> ·
+                        <span th:text="'Ciężar: ' + ${ex.weightKg} + ' kg'"></span>
+                    </div>
+                    <p class="text-muted mb-0" th:if="${ex.notes}" th:text="${ex.notes}"></p>
+                </div>
+                <div class="exercise-actions d-flex gap-2">
+                    <a th:href="@{'/journal/' + ${entry.id} + '?editExerciseId=' + ${ex.id}}"
+                       class="btn btn-outline-secondary">Edytuj</a>
+                    <form th:action="@{'/journal/' + ${entry.id} + '/exercises/' + ${ex.id} + '/delete'}" method="post"
+                          onsubmit="return confirm('Usunąć ćwiczenie?')">
+                        <button class="btn btn-outline-danger">Usuń</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 th:text="${exercise.id == null} ? 'Dodaj ćwiczenie' : 'Edytuj ćwiczenie'"></h3>
+            <div th:if="${exercise.id != null}" class="text-muted">
+                Edytujesz: <strong th:text="${exercise.name}"></strong>
+            </div>
+        </div>
+
+        <form class="form-section row g-3"
+              th:action="${exercise.id == null} ? @{'/journal/' + ${entry.id} + '/exercises'}
+                : @{'/journal/' + ${entry.id} + '/exercises/' + ${exercise.id} + '/update'}"
+              th:object="${exercise}" method="post">
+            <input type="hidden" th:field="*{id}">
+            <div class="col-md-4">
+                <label class="form-label">Nazwa ćwiczenia</label>
+                <input class="form-control form-control-lg" th:field="*{name}"
+                       placeholder="np. Przysiad, Wyciskanie" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Serie</label>
+                <input type="number" min="1" class="form-control form-control-lg" th:field="*{setsCount}"
+                       placeholder="np. 4" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Powtórzenia</label>
+                <input type="number" min="1" class="form-control form-control-lg" th:field="*{reps}"
+                       placeholder="np. 8" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Ciężar [kg]</label>
+                <input type="number" step="0.5" class="form-control form-control-lg" th:field="*{weightKg}"
+                       placeholder="np. 80">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Notatka</label>
+                <input class="form-control form-control-lg" th:field="*{notes}"
+                       placeholder="tempo, RPE, uwagi">
+            </div>
+            <div class="col-12 d-flex gap-3">
+                <button class="btn btn-primary btn-lg" type="submit"
+                        th:text="${exercise.id == null} ? 'Dodaj ćwiczenie' : 'Zapisz zmiany'"></button>
+                <a class="btn btn-link btn-lg" th:href="@{'/journal/' + ${entry.id}}">Anuluj</a>
+            </div>
+        </form>
+    </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
